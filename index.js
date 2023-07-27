@@ -1,3 +1,4 @@
+require('dotenv').config()
 const express = require('express');
 const app = express();
 const cors = require('cors');
@@ -11,35 +12,53 @@ app.use(express.json());
 
 
 const { MongoClient, ServerApiVersion } = require('mongodb');
-const uri = "mongodb+srv://<username>:<password>@cluster0.z8yqdyj.mongodb.net/?retryWrites=true&w=majority";
+const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.z8yqdyj.mongodb.net/?retryWrites=true&w=majority`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
-  serverApi: {
-    version: ServerApiVersion.v1,
-    strict: true,
-    deprecationErrors: true,
-  }
+    serverApi: {
+        version: ServerApiVersion.v1,
+        strict: true,
+        deprecationErrors: true,
+    }
 });
 
-async function run() {
-  try {
-    // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
-    // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
-  } finally {
-    // Ensures that the client will close when you finish/error
-    // await client.close();
-  }
+const dbConnect = async () => {
+    try {
+        client.connect();
+        console.log("Database Connected Successfully✅");
+
+    } catch (error) {
+        console.log(error.name, error.message);
+    }
 }
-run().catch(console.dir);
+dbConnect()
 
 
+const userInfoCollection = client.db('formDb').collection('userInfo')
+const userReviewCollection = client.db('formDb').collection('review')
+
+app.post('/userInfo', async (req, res) => {
+    const newItem = req.body;
+    console.log(newItem);
+    const result = await userInfoCollection.insertOne(newItem);
+    res.send(result);
+
+})
+
+app.get('/userInfo', async (req, res) => {
+    const result = await userInfoCollection.find().toArray();
+    res.send(result);
+})
 
 
+app.post('/review', async (req, res) => {
+    const newItem = req.body;
+    console.log(newItem);
+    const result = await userReviewCollection.insertOne(newItem);
+    res.send(result);
 
+})
 
 // test purpose
 app.get('/', (req, res) => {
